@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Особистий кабінет</h2>
+<h3>Історія вашіх замовлень</h3>
+
+{% if not orders %}
+    <p>У вас ще немає оформлених замовлень.</p>
+{% else %}
+    {% for order in orders %}
+        <div style="background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+            <h4>Замовлення #{{ order.id }} від {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</h4>
+            <p><strong>Статус:</strong> {{ order.status }}</p>
+            <ul>
+                {% for item in order.items %}
+                    <li>{{ item.dish_title }} — {{ item.quantity }} шт. x {{ item.price }} грн</li>
+                {% endfor %}
+            </ul>
+            <p><strong>Загальна сума:</strong> {{ order.total_price }} грн</p>
+        </div>
+    {% endfor %}
+{% endif %}
+{% endblock %}

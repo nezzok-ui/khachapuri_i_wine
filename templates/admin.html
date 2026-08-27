@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Адмін-панель: Управління меню</h2>
+
+{% if message %}
+    <p style="color: green; font-weight: bold;">{{ message }}</p>
+{% endif %}
+{% if error %}
+    <p style="color: red; font-weight: bold;">{{ error }}</p>
+{% endif %}
+
+<div style="background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+    <h3>Додати нову страву</h3>
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="add_dish" value="1">
+        <div style="margin-bottom: 0.5rem;">
+            <label>Назва:</label><br>
+            <input type="text" name="title" required style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 0.5rem;">
+            <label>Категорія:</label><br>
+            <input type="text" name="category" required style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 0.5rem;">
+            <label>Ціна (грн):</label><br>
+            <input type="number" step="0.01" name="price" required style="width: 100%;">
+        </div>
+        <div style="margin-bottom: 0.5rem;">
+            <label>Опис:</label><br>
+            <textarea name="description" style="width: 100%;"></textarea>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Фотографія страви:</label><br>
+            <input type="file" name="image" accept="image/*">
+        </div>
+        <button type="submit" class="btn-add">Зберегти страву</button>
+    </form>
+</div>
+
+<h3>Поточне меню</h3>
+<table style="width: 100%; background: white; border-collapse: collapse; margin-bottom: 2rem;">
+    <thead>
+        <tr style="background: #8b0000; color: white;">
+            <th style="padding: 0.5rem;">Фото</th>
+            <th style="padding: 0.5rem;">Назва</th>
+            <th style="padding: 0.5rem;">Ціна</th>
+            <th style="padding: 0.5rem;">Дії</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for dish in dishes %}
+        <tr style="border-bottom: 1px solid #ddd; text-align: center;">
+            <td style="padding: 0.5rem;">
+                <img src="{{ url_for('static', filename='uploads/' + dish.image) }}" width="50" height="50" style="object-fit: cover;">
+            </td>
+            <td style="padding: 0.5rem;">{{ dish.title }}</td>
+            <td style="padding: 0.5rem;">{{ dish.price }} грн</td>
+            <td style="padding: 0.5rem;">
+                <a href="/admin/edit/{{ dish.id }}" style="color: blue; margin-right: 10px;">Редагувати</a>
+                <a href="/admin/delete/{{ dish.id }}" style="color: red;" onclick="return confirm('Видалити страву?');">Видалити</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if is_super_admin %}
+<div style="background: #f4f4f4; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; border: 1px solid #ccc;">
+    <h3>Призначити нового адміністратора за поштою</h3>
+    <form method="POST" style="display: flex; gap: 10px; align-items: center;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="grant_admin" value="1">
+        <input type="email" name="email" placeholder="Введіть email користувача" required style="padding: 0.5rem; width: 300px;">
+        <button type="submit" class="btn-add" style="background-color: #28a745;">Зробити адміном</button>
+    </form>
+</div>
+
+<h3>Список діючих адміністраторів</h3>
+<table style="width: 100%; background: white; border-collapse: collapse;">
+    <thead>
+        <tr style="background: #333; color: white;">
+            <th style="padding: 0.5rem;">Користувач</th>
+            <th style="padding: 0.5rem;">Email</th>
+            <th style="padding: 0.5rem;">Дія</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in admins %}
+        <tr style="border-bottom: 1px solid #ddd; text-align: center;">
+            <td style="padding: 0.5rem;">{{ user.username }}</td>
+            <td style="padding: 0.5rem;">{{ user.email }}</td>
+            <td style="padding: 0.5rem;">
+                {% if user.email != current_user.email %}
+                    <a href="/admin/revoke_admin/{{ user.id }}" style="color: red; font-weight: bold;" onclick="return confirm('Забрати права адміністратора?');">Забрати адміна</a>
+                {% else %}
+                    <em>(Головний адмін)</em>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% endblock %}

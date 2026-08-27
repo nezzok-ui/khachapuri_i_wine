@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2 style="text-align: center; margin-bottom: 2rem;">Наше меню</h2>
+
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px;">
+    {% for dish in dishes %}
+    <div style="background: white; border-radius: 10px; padding: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between;">
+        <div>
+            <img src="{{ url_for('static', filename='uploads/' + dish.image) }}" alt="{{ dish.title }}" style="width: 100%; height: 180px; object-fit: cover; border-radius: 8px;">
+            <h3 style="margin: 0.5rem 0;">{{ dish.title }}</h3>
+            <p style="color: #666; font-size: 0.9rem;">{{ dish.description }}</p>
+        </div>
+        <div>
+            <p style="font-weight: bold; font-size: 1.2rem; color: #8b0000; margin: 0.5rem 0;">{{ dish.price }} грн</p>
+            <form action="{{ url_for('add_to_cart', dish_id=dish.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" class="btn-add" style="width: 100%; padding: 0.5rem; background: #8b0000; color: white; border: none; border-radius: 5px; cursor: pointer;">У кошик</button>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

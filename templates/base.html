@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Хачапурі і Вино{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <a href="{{ url_for('index') }}" style="color: white; text-decoration: none;">Хачапурі і Вино</a>
+        </div>
+        <nav>
+            <a href="{{ url_for('index') }}">Меню</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('cart') }}">Кошик</a>
+                <a href="{{ url_for('profile') }}">Профіль</a>
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin') }}">Панель адміністратора</a>
+                {% endif %}
+                <span style="margin-left: 1.5rem; font-weight: bold; color: #f0e6d2;">{{ current_user.username }}</span>
+                <a href="{{ url_for('logout') }}">Вихід</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Вхід</a>
+                <a href="{{ url_for('register') }}">Реєстрація</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script>
+    document.addEventListener('submit', function(e) {
+        if (e.target.action && e.target.action.includes('/cart/add/')) {
+            e.preventDefault();
+            fetch(e.target.action, {
+                method: 'POST',
+                body: new FormData(e.target)
+            });
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 400px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <h2>Вхід у систему</h2>
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div style="margin-bottom: 1rem;">
+            <label>Email:</label><br>
+            <input type="email" name="email" required style="width: 100%; padding: 0.5rem; margin-top: 0.3rem;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Пароль:</label><br>
+            <input type="password" name="password" required style="width: 100%; padding: 0.5rem; margin-top: 0.3rem;">
+        </div>
+        <button type="submit" class="btn-add" style="width: 100%; padding: 0.5rem; background: #8b0000; color: white; border: none; border-radius: 5px; cursor: pointer;">Увійти</button>
+    </form>
+</div>
+{% endblock %}

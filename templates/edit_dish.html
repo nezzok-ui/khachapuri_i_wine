@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+    <h2>Редагувати страву: {{ dish.title }}</h2>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div style="margin-bottom: 1rem;">
+            <label>Назва:</label><br>
+            <input type="text" name="title" value="{{ dish.title }}" required style="width: 100%; padding: 0.5rem; margin-top: 0.3rem;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Категорія:</label><br>
+            <input type="text" name="category" value="{{ dish.category }}" required style="width: 100%; padding: 0.5rem; margin-top: 0.3rem;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Ціна (грн):</label><br>
+            <input type="number" step="0.01" name="price" value="{{ dish.price }}" required style="width: 100%; padding: 0.5rem; margin-top: 0.3rem;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Опис:</label><br>
+            <textarea name="description" style="width: 100%; padding: 0.5rem; margin-top: 0.3rem; height: 100px;">{{ dish.description }}</textarea>
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label>Поточна фотографія:</label><br>
+            <img src="{{ url_for('static', filename='uploads/' + dish.image) }}" width="80" style="object-fit: cover; margin-top: 0.5rem; border-radius: 5px;"><br><br>
+            <label>Змінити фото (необов'язково):</label><br>
+            <input type="file" name="image" accept="image/*">
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button type="submit" class="btn-add">Зберегти зміни</button>
+            <a href="/admin" style="padding: 0.5rem 1rem; background: #666; color: white; text-decoration: none; border-radius: 5px;">Скасувати</a>
+        </div>
+    </form>
+</div>
+{% endblock %}'
