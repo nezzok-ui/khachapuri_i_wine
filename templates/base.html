@@ -32,16 +32,40 @@
         {% block content %}{% endblock %}
     </div>
 
-    <script>
-    document.addEventListener('submit', function(e) {
-        if (e.target.action && e.target.action.includes('/cart/add/')) {
-            e.preventDefault();
-            fetch(e.target.action, {
-                method: 'POST',
-                body: new FormData(e.target)
-            });
-        }
-    });
-    </script>
-</body>
-</html>
+<script>
+document.addEventListener('submit', function(e) {
+    if (e.target.action && e.target.action.includes('/cart/add/')) {
+        e.preventDefault();
+
+        const form = e.target;
+        const button = form.querySelector('button');
+
+        if (button.disabled) return;
+        button.disabled = true;
+
+        const originalText = 'У кошик';
+
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form)
+        }).then(response => {
+            if (response.ok) {
+                button.innerText = 'Додано! ✓';
+                button.style.backgroundColor = '#28a745';
+                button.style.color = '#ffffff';
+
+                setTimeout(() => {
+                    button.innerText = originalText;
+                    button.style.backgroundColor = '';
+                    button.style.color = '';
+                    button.disabled = false;
+                }, 1500);
+            } else {
+                button.disabled = false;
+            }
+        }).catch(() => {
+            button.disabled = false;
+        });
+    }
+});
+</script>
