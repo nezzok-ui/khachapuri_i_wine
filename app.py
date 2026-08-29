@@ -1,7 +1,7 @@
 import os
 from datetime import datetime
 import werkzeug.utils
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from PIL import Image
@@ -102,6 +102,7 @@ def add_to_cart(dish_id):
     str_id = str(dish_id)
     cart[str_id] = cart.get(str_id, 0) + 1
     session['cart'] = cart
+    flash("Страва успішно додана до кошика!", "success")
     return redirect(url_for('index'))
 
 
@@ -132,6 +133,7 @@ def remove_from_cart(dish_id):
     if str_id in cart:
         del cart[str_id]
         session['cart'] = cart
+        flash("Страва видалена з кошика!", "warning")
     return redirect(url_for('cart'))
 
 
@@ -140,6 +142,7 @@ def remove_from_cart(dish_id):
 def checkout():
     cart = session.get('cart', {})
     if not cart:
+        flash("Ваш кошик порожній!", "warning")
         return redirect(url_for('index'))
 
     total_price = 0
@@ -160,6 +163,7 @@ def checkout():
     db.session.commit()
 
     session['cart'] = {}
+    flash("Замовлення успішно оформлено!", "success")
     return redirect(url_for('profile'))
 
 
@@ -174,10 +178,8 @@ def profile():
 @login_required
 def admin():
     if not current_user.is_admin:
-        return "Доступ заборонено", 403
-
-    message = None
-    error = None
+        flash("У вас немає доступу до цієї сторінки!", "danger")
+        return redirect(url_for('index'))
 
     if request.method == 'POST':
         if 'add_dish' in request.form:
@@ -199,39 +201,41 @@ def admin():
             db.session.add(new_dish)
             db.session.commit()
             cache.clear()
+            flash(f"Страва '{title}' успішно додана!", "success")
             return redirect(url_for('admin'))
 
         elif 'grant_admin' in request.form:
             if current_user.email != SUPER_ADMIN_EMAIL:
-                error = "Тільки головний адміністратор може призначати адмінів!"
+                flash("Тільки головний адміністратор може призначати адмінів!", "danger")
             else:
                 target_email = request.form.get('email').strip()
                 user = User.query.filter_by(email=target_email).first()
                 if user:
                     user.is_admin = True
                     db.session.commit()
-                    message = f"Користувача {user.username} ({user.email}) успішно зроблено адміном!"
+                    flash(f"Користувача {user.username} ({user.email}) успішно зроблено адміном!", "success")
                 else:
-                    error = f"Користувача з поштою {target_email} не знайдено!"
+                    flash(f"Користувача з поштою {target_email} не знайдено!", "danger")
 
     dishes = Dish.query.all()
     admins = User.query.filter_by(is_admin=True).all()
     is_super_admin = (current_user.email == SUPER_ADMIN_EMAIL)
 
-    return render_template('admin.html', dishes=dishes, admins=admins, is_super_admin=is_super_admin, message=message,
-                           error=error)
+    return render_template('admin.html', dishes=dishes, admins=admins, is_super_admin=is_super_admin)
 
 
 @app.route('/admin/revoke_admin/<int:user_id>')
 @login_required
 def revoke_admin(user_id):
     if current_user.email != SUPER_ADMIN_EMAIL:
-        return "Тільки головний адміністратор може забирати права!", 403
+        flash("Тільки головний адміністратор може забирати права!", "danger")
+        return redirect(url_for('admin'))
 
     user = User.query.get(user_id)
     if user and user.email != SUPER_ADMIN_EMAIL:
         user.is_admin = False
         db.session.commit()
+        flash(f"Права адміністратора для {user.username} скасовано!", "warning")
 
     return redirect(url_for('admin'))
 
@@ -240,13 +244,15 @@ def revoke_admin(user_id):
 @login_required
 def delete_dish(dish_id):
     if not current_user.is_admin:
-        return "Доступ заборонено", 403
+        flash("У вас немає доступу до цієї дії!", "danger")
+        return redirect(url_for('index'))
 
     dish = Dish.query.get(dish_id)
     if dish:
         db.session.delete(dish)
         db.session.commit()
         cache.clear()
+        flash("Страва видалена!", "success")
     return redirect(url_for('admin'))
 
 
@@ -259,7 +265,8 @@ def register():
 
         user_exists = User.query.filter_by(email=email).first()
         if user_exists:
-            return render_template('register.html', error='Користувач з таким email вже існує!')
+            flash("Користувач з таким email вже існує!", "danger")
+            return render_template('register.html')
 
         hashed_password = generate_password_hash(password, method='scrypt')
 
@@ -270,6 +277,7 @@ def register():
         db.session.commit()
 
         login_user(new_user)
+        flash("Ви успішно зареєструвалися та увійшли!", "success")
         return redirect(url_for('index'))
 
     return render_template('register.html')
@@ -283,13 +291,15 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if not user or not check_password_hash(user.password, password):
-            return render_template('login.html', error='Невірний email або пароль!')
+            flash("Невірний email або пароль!", "danger")
+            return render_template('login.html')
 
         if user.email == SUPER_ADMIN_EMAIL and not user.is_admin:
             user.is_admin = True
             db.session.commit()
 
         login_user(user)
+        flash("Ви успішно увійшли!", "success")
         return redirect(url_for('index'))
 
     return render_template('login.html')
@@ -299,6 +309,7 @@ def login():
 @login_required
 def logout():
     logout_user()
+    flash("Ви вийшли з акаунта", "info")
     return redirect(url_for('index'))
 
 
@@ -306,7 +317,8 @@ def logout():
 @login_required
 def edit_dish(dish_id):
     if not current_user.is_admin:
-        return "Доступ заборонено", 403
+        flash("У вас немає доступу до цієї сторінки!", "danger")
+        return redirect(url_for('index'))
 
     dish = Dish.query.get_or_404(dish_id)
 
@@ -322,6 +334,7 @@ def edit_dish(dish_id):
 
         db.session.commit()
         cache.clear()
+        flash("Інформацію про страву успішно оновлено!", "success")
         return redirect(url_for('admin'))
 
     return render_template('edit_dish.html', dish=dish)
