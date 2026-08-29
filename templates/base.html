@@ -4,9 +4,38 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Хачапурі і Вино{% endblock %}</title>
+    <!-- Підключення Bootstrap CSS для стилізації сповіщень -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <!-- Блок вспливаючих сповіщень (Flash Messages) -->
+    {% block notify %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1090;">
+                {% for category, message in messages %}
+                    <div class="toast align-items-center text-bg-{{ category }} border-0 shadow-lg rounded-3"
+                         role="alert"
+                         aria-live="assertive"
+                         aria-atomic="true"
+                         data-bs-delay="4000">
+                        <div class="d-flex">
+                            <div class="toast-body fs-6 py-3">
+                                {{ message }}
+                            </div>
+                            <button type="button"
+                                    class="btn-close btn-close-white me-2 m-auto"
+                                    data-bs-dismiss="toast"
+                                    aria-label="Close"></button>
+                        </div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    {% endblock notify %}
+
     <header>
         <div class="logo">
             <a href="{{ url_for('index') }}" style="color: white; text-decoration: none;">Хачапурі і Вино</a>
@@ -29,43 +58,65 @@
     </header>
 
     <div class="container">
-        {% block content %}{% endblock %}
+        {% block content %}{% endblock content %}
     </div>
 
-<script>
-document.addEventListener('submit', function(e) {
-    if (e.target.action && e.target.action.includes('/cart/add/')) {
-        e.preventDefault();
+    <!-- Bootstrap JS для роботи вспливаючих вікон -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-        const form = e.target;
-        const button = form.querySelector('button');
-
-        if (button.disabled) return;
-        button.disabled = true;
-
-        const originalText = 'У кошик';
-
-        fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form)
-        }).then(response => {
-            if (response.ok) {
-                button.innerText = 'Додано! ✓';
-                button.style.backgroundColor = '#28a745';
-                button.style.color = '#ffffff';
-
-                setTimeout(() => {
-                    button.innerText = originalText;
-                    button.style.backgroundColor = '';
-                    button.style.color = '';
-                    button.disabled = false;
-                }, 1500);
-            } else {
-                button.disabled = false;
-            }
-        }).catch(() => {
-            button.disabled = false;
+    <!-- Скрипт автоматичного показу сповіщень Toast -->
+    {% block toaster %}
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const toastElList = document.querySelectorAll('.toast');
+        const toastList = [...toastElList].map(toastEl => {
+            const toast = new bootstrap.Toast(toastEl);
+            toast.show();
+            return toast;
         });
-    }
-});
-</script>
+    });
+    </script>
+    {% endblock toaster %}
+
+    <!-- Скрипт зміни вигляду кнопки "У кошик" без перезавантаження -->
+    {% block script %}
+    <script>
+    document.addEventListener('submit', function(e) {
+        if (e.target.action && e.target.action.includes('/cart/add/')) {
+            e.preventDefault();
+
+            const form = e.target;
+            const button = form.querySelector('button');
+
+            if (button.disabled) return;
+            button.disabled = true;
+
+            const originalText = 'У кошик';
+
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form)
+            }).then(response => {
+                if (response.ok) {
+                    button.innerText = 'Додано! ✓';
+                    button.style.backgroundColor = '#28a745';
+                    button.style.color = '#ffffff';
+
+                    setTimeout(() => {
+                        button.innerText = originalText;
+                        button.style.backgroundColor = '';
+                        button.style.color = '';
+                        button.disabled = false;
+                    }, 1500);
+                } else {
+                    button.disabled = false;
+                }
+            }).catch(() => {
+                button.disabled = false;
+            });
+        }
+    });
+    </script>
+    {% endblock script %}
+</body>
+</html>
