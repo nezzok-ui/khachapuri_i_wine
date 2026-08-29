@@ -20,7 +20,7 @@ app.config['CACHE_DEFAULT_TIMEOUT'] = 60
 csrf = CSRFProtect(app)
 cache = Cache(app)
 
-SUPER_ADMIN_EMAIL = 'nezzok777@gmail.com' #email головного адміна
+SUPER_ADMIN_EMAIL = 'nezzok777@gmail.com'
 
 db.init_app(app)
 

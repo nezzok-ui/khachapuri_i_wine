@@ -97,6 +97,27 @@
                     button.style.backgroundColor = '#28a745';
                     button.style.color = '#ffffff';
 
+                    let toastContainer = document.querySelector('.toast-container');
+                    if (!toastContainer) {
+                        toastContainer = document.createElement('div');
+                        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+                        toastContainer.style.zIndex = '1090';
+                        document.body.appendChild(toastContainer);
+                    }
+
+                    const toastHtml = `
+                        <div class="toast align-items-center text-bg-success border-0 shadow-lg rounded-3" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="4000">
+                            <div class="d-flex">
+                                <div class="toast-body fs-6 py-3">Страва успішно додана до кошика!</div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                        </div>
+                    `;
+                    toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+                    const newToastEl = toastContainer.lastElementChild;
+                    const bsToast = new bootstrap.Toast(newToastEl);
+                    bsToast.show();
+
                     setTimeout(() => {
                         button.innerText = originalText;
                         button.style.backgroundColor = '';
