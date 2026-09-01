@@ -1,23 +1,42 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<h2>Особистий кабінет</h2>
-<h3>Історія вашіх замовлень</h3>
+{% block title %}Особистий кабінет{% endblock %}
 
-{% if not orders %}
-    <p>У вас ще немає оформлених замовлень.</p>
-{% else %}
-    {% for order in orders %}
-        <div style="background: white; padding: 1.5rem; margin-bottom: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h4>Замовлення #{{ order.id }} від {{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</h4>
-            <p><strong>Статус:</strong> {{ order.status }}</p>
-            <ul>
-                {% for item in order.items %}
-                    <li>{{ item.dish_title }} — {{ item.quantity }} шт. x {{ item.price }} грн</li>
-                {% endfor %}
-            </ul>
-            <p><strong>Загальна сума:</strong> {{ order.total_price }} грн</p>
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+    <h2 style="color: #8b0000; margin-bottom: 1.5rem;">Привіт, {{ current_user.username }}!</h2>
+
+    <h3 style="margin-top: 2rem; border-bottom: 2px solid #8b0000; padding-bottom: 0.5rem;">Мої бронювання столиків</h3>
+    {% if reservations %}
+        <div style="display: grid; gap: 1rem; margin-top: 1rem;">
+            {% for res in reservations %}
+                <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <p style="margin: 0; font-weight: bold; font-size: 1.1rem; color: #28a745;">✓ Заброньовано на {{ res.date }} о {{ res.time }}</p>
+                    <p style="margin: 0.4rem 0 0 0; color: #555;">Ім'я: {{ res.name }} | Телефон: {{ res.phone }} | Кількість гостей: {{ res.guests }}</p>
+                </div>
+            {% endfor %}
         </div>
-    {% endfor %}
-{% endif %}
+    {% else %}
+        <p style="color: #777;">У вас поки немає заброньованих столиків.</p>
+    {% endif %}
+
+    <h3 style="margin-top: 2.5rem; border-bottom: 2px solid #8b0000; padding-bottom: 0.5rem;">Історія замовлень</h3>
+    {% if orders %}
+        <div style="display: grid; gap: 1rem; margin-top: 1rem;">
+            {% for order in orders %}
+                <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <p style="margin: 0; font-weight: bold;">Замовлення #{{ order.id }} від {{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+                    <p style="margin: 0.5rem 0; color: #8b0000; font-weight: bold;">Сума: {{ order.total_price }} грн</p>
+                    <ul style="margin: 0; padding-left: 1.2rem; color: #555;">
+                        {% for item in order.items %}
+                            <li>{{ item.dish_title }} x{{ item.quantity }} ({{ item.price }} грн)</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p style="color: #777;">У вас поки немає зроблених замовлень.</p>
+    {% endif %}
+</div>
 {% endblock %}

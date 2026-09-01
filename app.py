@@ -7,7 +7,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from PIL import Image
 from flask_wtf.csrf import CSRFProtect
 from flask_caching import Cache
-from models import db, User, Dish, Order, OrderItem
+from models import db, User, Dish, Order, OrderItem, Reservation
 
 app = Flask(__name__)
 
@@ -171,7 +171,8 @@ def checkout():
 @login_required
 def profile():
     orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
-    return render_template('profile.html', orders=orders)
+    reservations = Reservation.query.filter_by(user_id=current_user.id).order_by(Reservation.created_at.desc()).all()
+    return render_template('profile.html', orders=orders, reservations=reservations)
 
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -338,6 +339,32 @@ def edit_dish(dish_id):
         return redirect(url_for('admin'))
 
     return render_template('edit_dish.html', dish=dish)
+
+
+@app.route('/booking', methods=['GET', 'POST'])
+def booking():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        phone = request.form.get('phone')
+        date = request.form.get('date')
+        time = request.form.get('time')
+        guests = int(request.form.get('guests'))
+        user_id = current_user.id if current_user.is_authenticated else None
+
+        new_booking = Reservation(
+            user_id=user_id,
+            name=name,
+            phone=phone,
+            date=date,
+            time=time,
+            guests=guests
+        )
+        db.session.add(new_booking)
+        db.session.commit()
+        flash("Столик успішно заброньовано!", "success")
+        return redirect(url_for('index'))
+
+    return render_template('booking.html')
 
 
 if __name__ == '__main__':
