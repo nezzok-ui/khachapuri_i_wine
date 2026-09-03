@@ -96,6 +96,32 @@ def index():
     return render_template('index.html', dishes=dishes)
 
 
+@app.route('/booking', methods=['GET', 'POST'])
+def booking():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        phone = request.form.get('phone')
+        date = request.form.get('date')
+        time = request.form.get('time')
+        guests = int(request.form.get('guests'))
+        user_id = current_user.id if current_user.is_authenticated else None
+
+        new_booking = Reservation(
+            user_id=user_id,
+            name=name,
+            phone=phone,
+            date=date,
+            time=time,
+            guests=guests
+        )
+        db.session.add(new_booking)
+        db.session.commit()
+        flash("Столик успішно заброньовано!", "success")
+        return redirect(url_for('index'))
+
+    return render_template('booking.html')
+
+
 @app.route('/cart/add/<int:dish_id>', methods=['POST'])
 def add_to_cart(dish_id):
     cart = session.get('cart', {})
@@ -126,7 +152,7 @@ def cart():
     return render_template('cart.html', cart_items=cart_items, total_sum=total_sum)
 
 
-@app.route('/cart/remove/<int:dish_id>')
+@app.route('/cart/remove/<int:dish_id>', methods=['POST'])
 def remove_from_cart(dish_id):
     cart = session.get('cart', {})
     str_id = str(dish_id)
@@ -225,7 +251,7 @@ def admin():
     return render_template('admin.html', dishes=dishes, admins=admins, is_super_admin=is_super_admin)
 
 
-@app.route('/admin/revoke_admin/<int:user_id>')
+@app.route('/admin/revoke_admin/<int:user_id>', methods=['POST'])
 @login_required
 def revoke_admin(user_id):
     if current_user.email != SUPER_ADMIN_EMAIL:
@@ -241,7 +267,7 @@ def revoke_admin(user_id):
     return redirect(url_for('admin'))
 
 
-@app.route('/admin/delete/<int:dish_id>')
+@app.route('/admin/delete/<int:dish_id>', methods=['POST'])
 @login_required
 def delete_dish(dish_id):
     if not current_user.is_admin:
@@ -339,32 +365,6 @@ def edit_dish(dish_id):
         return redirect(url_for('admin'))
 
     return render_template('edit_dish.html', dish=dish)
-
-
-@app.route('/booking', methods=['GET', 'POST'])
-def booking():
-    if request.method == 'POST':
-        name = request.form.get('name')
-        phone = request.form.get('phone')
-        date = request.form.get('date')
-        time = request.form.get('time')
-        guests = int(request.form.get('guests'))
-        user_id = current_user.id if current_user.is_authenticated else None
-
-        new_booking = Reservation(
-            user_id=user_id,
-            name=name,
-            phone=phone,
-            date=date,
-            time=time,
-            guests=guests
-        )
-        db.session.add(new_booking)
-        db.session.commit()
-        flash("Столик успішно заброньовано!", "success")
-        return redirect(url_for('index'))
-
-    return render_template('booking.html')
 
 
 if __name__ == '__main__':

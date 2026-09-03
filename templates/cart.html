@@ -1,39 +1,49 @@
 {% extends 'base.html' %}
 
+{% block title %}Кошик{% endblock %}
+
 {% block content %}
-<h2>Ваш кошик</h2>
+<div style="max-width: 800px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <h2 style="color: #8b0000; margin-bottom: 1.5rem; text-align: center;">Ваш кошик</h2>
 
-{% if not cart_items %}
-    <p>Ваш кошик порожній. Перейдіть до <a href="/">меню</a>, щоб вибрати страви!</p>
-{% else %}
-    <table style="width: 100%; border-collapse: collapse; margin-top: 1rem; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
-        <thead>
-            <tr style="background-color: #8b0000; color: white; text-align: left;">
-                <th style="padding: 1rem;">Страва</th>
-                <th style="padding: 1rem;">Ціна</th>
-                <th style="padding: 1rem;">Кількість</th>
-                <th style="padding: 1rem;">Сума</th>
-                <th style="padding: 1rem;">Дія</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in cart_items %}
-            <tr style="border-bottom: 1px solid #ddd;">
-                <td style="padding: 1rem;">{{ item.title }}</td>
-                <td style="padding: 1rem;">{{ item.price }} грн</td>
-                <td style="padding: 1rem;">{{ item.quantity }}</td>
-                <td style="padding: 1rem;">{{ item.total }} грн</td>
-                <td style="padding: 1rem;">
-                    <a href="/cart/remove/{{ item.id }}" style="color: red; text-decoration: none; font-weight: bold;">Видалити</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    {% if cart_items %}
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Назва</th>
+                    <th>Ціна</th>
+                    <th>Кількість</th>
+                    <th>Сума</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                    <tr>
+                        <td><strong>{{ item.title }}</strong></td>
+                        <td>{{ item.price }} грн</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>{{ item.total }} грн</td>
+                        <td>
+                            <form action="{{ url_for('remove_from_cart', dish_id=item.id) }}" method="POST" style="display:inline;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Видалити</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-    <div style="margin-top: 1.5rem; text-align: right;">
-        <h3>Загальна сума: <span style="color: #8b0000;">{{ total_sum }} грн</span></h3>
-        <a href="/cart/checkout" class="btn-add" style="text-decoration: none; display: inline-block; padding: 0.7rem 1.5rem;">Оформити замовлення</a>
-    </div>
-{% endif %}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1rem; border-top: 2px solid #eee;">
+            <h4>Загальна сума: <span style="color: #8b0000;">{{ total_sum }} грн</span></h4>
+            <a href="{{ url_for('checkout') }}" class="btn btn-success btn-lg" style="background-color: #28a745; border: none;">Оформити замовлення</a>
+        </div>
+    {% else %}
+        <p style="text-align: center; color: #777; font-size: 1.2rem; margin: 2rem 0;">Ваш кошик порожній.</p>
+        <div style="text-align: center;">
+            <a href="{{ url_for('index') }}" class="btn btn-primary" style="background-color: #8b0000; border: none;">Перейти до меню</a>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}

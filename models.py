@@ -1,46 +1,46 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import ForeignKey, DateTime, func
 from datetime import datetime
 
 db = SQLAlchemy()
 
 class User(UserMixin, db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(200), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False)
-    orders = db.relationship('Order', backref='user', lazy=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    username: Mapped[str] = mapped_column(db.String(50), nullable=False)
+    email: Mapped[str] = mapped_column(db.String(120), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(db.String(255), nullable=False)
+    is_admin: Mapped[bool] = mapped_column(default=False)
 
 class Dish(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), nullable=False)
-    category = db.Column(db.String(50), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    description = db.Column(db.Text, nullable=True)
-    image = db.Column(db.String(150), default='default.jpg')
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(db.String(100), nullable=False)
+    category: Mapped[str] = mapped_column(db.String(50), nullable=False)
+    price: Mapped[float] = mapped_column(nullable=False)
+    description: Mapped[str] = mapped_column(db.Text, nullable=False)
+    image: Mapped[str] = mapped_column(db.String(255), default='default.jpg')
 
 class Order(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    total_price = db.Column(db.Float, nullable=False)
-    status = db.Column(db.String(50), default='Прийнято')
-    created_at = db.Column(db.DateTime, default=datetime.now)
-    items = db.relationship('OrderItem', backref='order', lazy=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey('user.id'), nullable=False)
+    total_price: Mapped[float] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    items = relationship('OrderItem', backref='order', lazy=True)
 
 class OrderItem(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
-    dish_title = db.Column(db.String(100), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    quantity = db.Column(db.Integer, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey('order.id'), nullable=False)
+    dish_title: Mapped[str] = mapped_column(db.String(100), nullable=False)
+    price: Mapped[float] = mapped_column(nullable=False)
+    quantity: Mapped[int] = mapped_column(nullable=False)
 
 class Reservation(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
-    name = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20), nullable=False)
-    date = db.Column(db.String(20), nullable=False)
-    time = db.Column(db.String(10), nullable=False)
-    guests = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.now())
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(ForeignKey('user.id'), nullable=True)
+    name: Mapped[str] = mapped_column(db.String(100), nullable=False)
+    phone: Mapped[str] = mapped_column(db.String(20), nullable=False)
+    date: Mapped[str] = mapped_column(db.String(20), nullable=False)
+    time: Mapped[str] = mapped_column(db.String(10), nullable=False)
+    guests: Mapped[int] = mapped_column(nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
