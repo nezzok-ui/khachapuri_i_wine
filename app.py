@@ -5,6 +5,15 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.utils import secure_filename
 from models import db, User, Category, Dish, Reservation, Order, OrderItem
+import logging
+
+
+logging.basicConfig(
+    filename='app.log',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    encoding='utf-8'
+)
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key_here'
