@@ -8,6 +8,14 @@ from PIL import Image
 from flask_wtf.csrf import CSRFProtect
 from flask_caching import Cache
 from models import db, User, Dish, Order, OrderItem, Reservation
+import logging
+
+logging.basicConfig(
+    filename='app.log',
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    encoding='utf-8'
+)
 
 app = Flask(__name__)
 
@@ -163,33 +171,40 @@ def remove_from_cart(dish_id):
     return redirect(url_for('cart'))
 
 
-@app.route('/cart/checkout')
+@app.route('/cart/checkout', methods=['POST'])
 @login_required
 def checkout():
     cart = session.get('cart', {})
     if not cart:
-        flash("Ваш кошик порожній!", "warning")
-        return redirect(url_for('index'))
+        flash('Ваш кошик порожній!', 'warning')
+        return redirect(url_for('cart'))
 
     total_price = 0
-    order_items = []
-    for str_id, quantity in cart.items():
-        dish = Dish.query.get(int(str_id))
-        if dish:
-            total_price += dish.price * quantity
-            order_items.append(OrderItem(dish_title=dish.title, price=dish.price, quantity=quantity))
-
-    new_order = Order(
-        user_id=current_user.id,
-        total_price=total_price,
-        items=order_items,
-        created_at=datetime.now()
-    )
+    new_order = Order(user_id=current_user.id, total_price=0)
     db.session.add(new_order)
+    db.session.flush()
+
+    for dish_id_str, qty in cart.items():
+        dish = Dish.query.get(int(dish_id_str))
+        if dish:
+            item_total = dish.price * qty
+            total_price += item_total
+            order_item = OrderItem(
+                order_id=new_order.id,
+                dish_id=dish.id,
+                dish_title=dish.title,
+                price=dish.price,
+                quantity=qty
+            )
+            db.session.add(order_item)
+
+    new_order.total_price = total_price
     db.session.commit()
 
+    logging.info(f"Створено нове замовлення №{new_order.id} користувачем ID {current_user.id}.")
+
     session['cart'] = {}
-    flash("Замовлення успішно оформлено!", "success")
+    flash('Замовлення успішно оформлено!', 'success')
     return redirect(url_for('profile'))
 
 
@@ -205,7 +220,7 @@ def profile():
 @login_required
 def admin():
     if not current_user.is_admin:
-        flash("У вас немає доступу до цієї сторінки!", "danger")
+        flash("У вас немає доступу!", "danger")
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -215,40 +230,33 @@ def admin():
             price = float(request.form.get('price'))
             description = request.form.get('description')
             file = request.files.get('image')
+            image_filename = save_image(file) if file else 'default.jpg'
 
-            image_filename = save_image(file)
-
-            new_dish = Dish(
-                title=title,
-                category=category,
-                price=price,
-                description=description,
-                image=image_filename
-            )
+            new_dish = Dish(title=title, category=category, price=price, description=description, image=image_filename)
             db.session.add(new_dish)
             db.session.commit()
             cache.clear()
-            flash(f"Страва '{title}' успішно додана!", "success")
+            flash('Страва успішно додана!', 'success')
             return redirect(url_for('admin'))
 
-        elif 'grant_admin' in request.form:
-            if current_user.email != SUPER_ADMIN_EMAIL:
-                flash("Тільки головний адміністратор може призначати адмінів!", "danger")
+        if 'grant_admin' in request.form:
+            email = request.form.get('email')
+            user = User.query.filter_by(email=email).first()
+            if user:
+                user.is_admin = True
+                db.session.commit()
+                flash(f'Користувач {user.username} тепер адмін!', 'success')
             else:
-                target_email = request.form.get('email').strip()
-                user = User.query.filter_by(email=target_email).first()
-                if user:
-                    user.is_admin = True
-                    db.session.commit()
-                    flash(f"Користувача {user.username} ({user.email}) успішно зроблено адміном!", "success")
-                else:
-                    flash(f"Користувача з поштою {target_email} не знайдено!", "danger")
+                flash('Користувача з таким email не знайдено!', 'danger')
+            return redirect(url_for('admin'))
 
     dishes = Dish.query.all()
     admins = User.query.filter_by(is_admin=True).all()
-    is_super_admin = (current_user.email == SUPER_ADMIN_EMAIL)
+    is_super_admin = (current_user.email == 'admin@gmail.com') or (current_user.id == 1)
 
-    return render_template('admin.html', dishes=dishes, admins=admins, is_super_admin=is_super_admin)
+    reservations = Reservation.query.order_by(Reservation.created_at.desc()).all()
+    return render_template('admin.html', dishes=dishes, admins=admins, is_super_admin=is_super_admin,
+                           reservations=reservations)
 
 
 @app.route('/admin/revoke_admin/<int:user_id>', methods=['POST'])
@@ -271,15 +279,17 @@ def revoke_admin(user_id):
 @login_required
 def delete_dish(dish_id):
     if not current_user.is_admin:
-        flash("У вас немає доступу до цієї дії!", "danger")
+        flash('У вас немає доступу до цієї дії!', 'danger')
         return redirect(url_for('index'))
 
-    dish = Dish.query.get(dish_id)
-    if dish:
-        db.session.delete(dish)
-        db.session.commit()
-        cache.clear()
-        flash("Страва видалена!", "success")
+    dish = Dish.query.get_or_404(dish_id)
+    db.session.delete(dish)
+    db.session.commit()
+    cache.clear()
+
+    logging.info(f"Адміністратор {current_user.username} видалив страву ID {dish_id}.")
+
+    flash('Страва успішно видалена!', 'warning')
     return redirect(url_for('admin'))
 
 
@@ -312,25 +322,23 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
-
         user = User.query.filter_by(email=email).first()
-        if not user or not check_password_hash(user.password, password):
-            flash("Невірний email або пароль!", "danger")
-            return render_template('login.html')
 
-        if user.email == SUPER_ADMIN_EMAIL and not user.is_admin:
-            user.is_admin = True
-            db.session.commit()
-
-        login_user(user)
-        flash("Ви успішно увійшли!", "success")
-        return redirect(url_for('index'))
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            logging.info(f"Користувач {user.username} успішно увійшов у систему.")
+            flash('Ви успішно увійшли!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Невірний email або пароль', 'danger')
 
     return render_template('login.html')
-
 
 @app.route('/logout')
 @login_required
@@ -365,6 +373,47 @@ def edit_dish(dish_id):
         return redirect(url_for('admin'))
 
     return render_template('edit_dish.html', dish=dish)
+
+@app.route('/position/<int:dish_id>')
+def position(dish_id):
+    dish = Dish.query.get_or_404(dish_id)
+    return render_template('position.html', dish=dish)
+
+@app.route('/my_order/<int:order_id>')
+@login_required
+def my_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id and not current_user.is_admin:
+        flash("У вас немає доступу до цього замовлення!", "danger")
+        return redirect(url_for('profile'))
+    return render_template('my_order.html', order=order)
+
+@app.route('/my_order/cancel/<int:order_id>', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    order = Order.query.get_or_404(order_id)
+    if order.user_id != current_user.id and not current_user.is_admin:
+        flash("У вас немає прав скасувати це замовлення!", "danger")
+        return redirect(url_for('profile'))
+
+    OrderItem.query.filter_by(order_id=order.id).delete()
+    db.session.delete(order)
+    db.session.commit()
+    flash("Замовлення успішно скасовано!", "warning")
+    return redirect(url_for('profile'))
+
+@app.route('/admin/reservation/cancel/<int:res_id>', methods=['POST'])
+@login_required
+def cancel_reservation(res_id):
+    if not current_user.is_admin:
+        flash("У вас немає доступу до цієї дії!", "danger")
+        return redirect(url_for('index'))
+
+    res = Reservation.query.get_or_404(res_id)
+    db.session.delete(res)
+    db.session.commit()
+    flash("Бронювання успішно скасовано!", "warning")
+    return redirect(url_for('admin'))
 
 
 if __name__ == '__main__':

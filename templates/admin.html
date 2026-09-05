@@ -45,6 +45,43 @@
         </form>
     </div>
 
+    <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 2rem;">
+        <h4 style="color: #8b0000; margin-bottom: 1rem;">Бронювання столиків</h4>
+        {% if reservations %}
+            <table class="table table-striped align-middle">
+                <thead>
+                    <tr>
+                        <th>Ім'я</th>
+                        <th>Телефон</th>
+                        <th>Дата</th>
+                        <th>Час</th>
+                        <th>Гостей</th>
+                        <th>Дія</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for res in reservations %}
+                        <tr>
+                            <td><strong>{{ res.name }}</strong></td>
+                            <td>{{ res.phone }}</td>
+                            <td>{{ res.date }}</td>
+                            <td>{{ res.time }}</td>
+                            <td>{{ res.guests }}</td>
+                            <td>
+                                <form action="{{ url_for('cancel_reservation', res_id=res.id) }}" method="POST" style="display:inline;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Скасувати це бронювання?');">Скасувати</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="text-muted">Активних бронювань немає.</p>
+        {% endif %}
+    </div>
+
     {% if is_super_admin %}
     <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 2rem;">
         <h4 style="color: #8b0000; margin-bottom: 1rem;">Управління адміністраторами</h4>

@@ -3,40 +3,44 @@
 {% block title %}Особистий кабінет{% endblock %}
 
 {% block content %}
-<div style="max-width: 800px; margin: 2rem auto;">
-    <h2 style="color: #8b0000; margin-bottom: 1.5rem;">Привіт, {{ current_user.username }}!</h2>
+<div style="max-width: 900px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    <h2 style="color: #8b0000;" class="mb-4">Особистий кабінет ({{ current_user.username }})</h2>
 
-    <h3 style="margin-top: 2rem; border-bottom: 2px solid #8b0000; padding-bottom: 0.5rem;">Мої бронювання столиків</h3>
-    {% if reservations %}
-        <div style="display: grid; gap: 1rem; margin-top: 1rem;">
-            {% for res in reservations %}
-                <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <p style="margin: 0; font-weight: bold; font-size: 1.1rem; color: #28a745;">✓ Заброньовано на {{ res.date }} о {{ res.time }}</p>
-                    <p style="margin: 0.4rem 0 0 0; color: #555;">Ім'я: {{ res.name }} | Телефон: {{ res.phone }} | Кількість гостей: {{ res.guests }}</p>
+    <h4 style="color: #8b0000;" class="mt-4">Ваші замовлення</h4>
+    {% if orders %}
+        <div class="list-group mb-4">
+            {% for order in orders %}
+                <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                    <div>
+                        <strong>Замовлення №{{ order.id }}</strong> — {{ order.total_price }} грн
+                        <br>
+                        <small class="text-muted">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('my_order', order_id=order.id) }}" class="btn btn-sm btn-info me-2">Деталі</a>
+                        <form action="{{ url_for('cancel_order', order_id=order.id) }}" method="POST" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Скасувати це замовлення?');">Скасувати</button>
+                        </form>
+                    </div>
                 </div>
             {% endfor %}
         </div>
     {% else %}
-        <p style="color: #777;">У вас поки немає заброньованих столиків.</p>
+        <p class="text-muted">У вас поки немає замовлень.</p>
     {% endif %}
 
-    <h3 style="margin-top: 2.5rem; border-bottom: 2px solid #8b0000; padding-bottom: 0.5rem;">Історія замовлень</h3>
-    {% if orders %}
-        <div style="display: grid; gap: 1rem; margin-top: 1rem;">
-            {% for order in orders %}
-                <div style="background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                    <p style="margin: 0; font-weight: bold;">Замовлення #{{ order.id }} від {{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
-                    <p style="margin: 0.5rem 0; color: #8b0000; font-weight: bold;">Сума: {{ order.total_price }} грн</p>
-                    <ul style="margin: 0; padding-left: 1.2rem; color: #555;">
-                        {% for item in order.items %}
-                            <li>{{ item.dish_title }} x{{ item.quantity }} ({{ item.price }} грн)</li>
-                        {% endfor %}
-                    </ul>
-                </div>
+    <h4 style="color: #8b0000;" class="mt-4">Ваші бронювання</h4>
+    {% if reservations %}
+        <ul class="list-group">
+            {% for res in reservations %}
+                <li class="list-group-item">
+                    Дата: <strong>{{ res.date }}</strong> о <strong>{{ res.time }}</strong> | Гостей: {{ res.guests }} (Ім'я: {{ res.name }}, Тел: {{ res.phone }})
+                </li>
             {% endfor %}
-        </div>
+        </ul>
     {% else %}
-        <p style="color: #777;">У вас поки немає зроблених замовлень.</p>
+        <p class="text-muted">Заброньованих столиків немає.</p>
     {% endif %}
 </div>
 {% endblock %}
