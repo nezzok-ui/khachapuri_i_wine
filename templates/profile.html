@@ -1,46 +1,78 @@
 {% extends 'base.html' %}
 
-{% block title %}Особистий кабінет{% endblock %}
-
 {% block content %}
-<div style="max-width: 900px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-    <h2 style="color: #8b0000;" class="mb-4">Особистий кабінет ({{ current_user.username }})</h2>
+<div class="container my-4" style="max-width: 900px;">
+    <h2 class="text-danger fw-bold mb-4">Особистий кабінет: {{ current_user.username }}</h2>
 
-    <h4 style="color: #8b0000;" class="mt-4">Ваші замовлення</h4>
-    {% if orders %}
-        <div class="list-group mb-4">
-            {% for order in orders %}
-                <div class="list-group-item d-flex justify-content-between align-items-center p-3">
-                    <div>
-                        <strong>Замовлення №{{ order.id }}</strong> — {{ order.total_price }} грн
-                        <br>
-                        <small class="text-muted">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                    </div>
-                    <div>
-                        <a href="{{ url_for('my_order', order_id=order.id) }}" class="btn btn-sm btn-info me-2">Деталі</a>
-                        <form action="{{ url_for('cancel_order', order_id=order.id) }}" method="POST" style="display:inline;">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Скасувати це замовлення?');">Скасувати</button>
-                        </form>
-                    </div>
-                </div>
-            {% endfor %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-danger text-white fw-bold">Мої замовлення</div>
+        <div class="card-body">
+            {% if orders %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>№ Замовлення</th>
+                            <th>Дата</th>
+                            <th>Сума</th>
+                            <th>Статус</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr>
+                            <td><strong>#{{ order.id }}</strong></td>
+                            <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>{{ order.total_price }} грн</td>
+                            <td>
+                                {% if order.status == 'Виконано' %}
+                                    <span class="badge bg-success">Виконано</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark">В обробці</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('my_order', order_id=order.id) }}" class="btn btn-sm btn-outline-primary">Детальніше</a>
+                                {% if order.status != 'Виконано' %}
+                                <form action="{{ url_for('cancel_order', order_id=order.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Скасувати</button>
+                                </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted m-0">У вас немає активних замовлень.</p>
+            {% endif %}
         </div>
-    {% else %}
-        <p class="text-muted">У вас поки немає замовлень.</p>
-    {% endif %}
+    </div>
 
-    <h4 style="color: #8b0000;" class="mt-4">Ваші бронювання</h4>
-    {% if reservations %}
-        <ul class="list-group">
-            {% for res in reservations %}
-                <li class="list-group-item">
-                    Дата: <strong>{{ res.date }}</strong> о <strong>{{ res.time }}</strong> | Гостей: {{ res.guests }} (Ім'я: {{ res.name }}, Тел: {{ res.phone }})
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-danger text-white fw-bold">Мої бронювання столиків</div>
+        <div class="card-body">
+            {% if reservations %}
+            <ul class="list-group list-group-flush">
+                {% for res in reservations %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>Дата:</strong> {{ res.date }} о {{ res.time }} | <strong>Гостей:</strong> {{ res.guests }}
+                    </div>
+                    <form action="{{ url_for('cancel_my_reservation', res_id=res.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Скасувати</button>
+                    </form>
                 </li>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p class="text-muted">Заброньованих столиків немає.</p>
-    {% endif %}
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted m-0">У вас немає заброньованих столиків.</p>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock %}

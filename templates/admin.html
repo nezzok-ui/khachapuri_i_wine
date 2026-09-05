@@ -1,153 +1,282 @@
 {% extends 'base.html' %}
 
-{% block title %}Панель адміністратора{% endblock %}
-
 {% block content %}
-<div style="max-width: 1000px; margin: 2rem auto;">
-    <h2 style="color: #8b0000; margin-bottom: 2rem; text-align: center;">Панель адміністратора</h2>
+<div class="container my-4">
+    <h1 class="text-danger fw-bold mb-4">Панель адміністратора</h1>
 
-    <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 2rem;">
-        <h4 style="color: #8b0000; margin-bottom: 1rem;">Додати нову страву</h4>
-        <form action="{{ url_for('admin') }}" method="POST" enctype="multipart/form-data">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="add_dish" value="1">
-
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label font-weight-bold">Назва страви:</label>
-                    <input type="text" name="title" class="form-control" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label font-weight-bold">Категорія:</label>
-                    <select name="category" class="form-select" required>
-                        <option value="Хачапурі">Хачапурі</option>
-                        <option value="Гаряче">Гаряче</option>
-                        <option value="Вино">Вино</option>
-                        <option value="Напої">Напої</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label font-weight-bold">Ціна (грн):</label>
-                    <input type="number" step="0.01" name="price" class="form-control" required>
-                </div>
-                <div class="col-12">
-                    <label class="form-label font-weight-bold">Опис:</label>
-                    <textarea name="description" class="form-control" rows="2" required></textarea>
-                </div>
-                <div class="col-12">
-                    <label class="form-label font-weight-bold">Зображення:</label>
-                    <input type="file" name="image" class="form-control" accept="image/*">
-                </div>
-                <div class="col-12">
-                    <button type="submit" class="btn btn-success" style="background-color: #8b0000; border: none;">Додати страву</button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 2rem;">
-        <h4 style="color: #8b0000; margin-bottom: 1rem;">Бронювання столиків</h4>
-        {% if reservations %}
-            <table class="table table-striped align-middle">
-                <thead>
-                    <tr>
-                        <th>Ім'я</th>
-                        <th>Телефон</th>
-                        <th>Дата</th>
-                        <th>Час</th>
-                        <th>Гостей</th>
-                        <th>Дія</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for res in reservations %}
-                        <tr>
-                            <td><strong>{{ res.name }}</strong></td>
-                            <td>{{ res.phone }}</td>
-                            <td>{{ res.date }}</td>
-                            <td>{{ res.time }}</td>
-                            <td>{{ res.guests }}</td>
-                            <td>
-                                <form action="{{ url_for('cancel_reservation', res_id=res.id) }}" method="POST" style="display:inline;">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Скасувати це бронювання?');">Скасувати</button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <p class="text-muted">Активних бронювань немає.</p>
-        {% endif %}
-    </div>
-
+    <!-- Управління адміністраторами (тільки для суперадміна) -->
     {% if is_super_admin %}
-    <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); margin-bottom: 2rem;">
-        <h4 style="color: #8b0000; margin-bottom: 1rem;">Управління адміністраторами</h4>
+    <div class="card shadow-sm mb-5 border-0">
+        <div class="card-header bg-dark text-white fw-bold">
+            Управління адміністраторами (Суперадмін)
+        </div>
+        <div class="card-body">
+            <form action="{{ url_for('admin') }}" method="POST" class="row g-3 mb-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="col-md-8">
+                    <input type="email" name="email" class="form-control" placeholder="Email користувача для надання прав адміна" required>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" name="grant_admin" class="btn btn-dark w-100">Призначити адміном</button>
+                </div>
+            </form>
 
-        <form action="{{ url_for('admin') }}" method="POST" class="mb-4">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" name="grant_admin" value="1">
-            <div class="input-group">
-                <input type="email" name="email" class="form-control" placeholder="Email користувача" required>
-                <button type="submit" class="btn btn-primary" style="background-color: #8b0000; border: none;">Призначити адміном</button>
-            </div>
-        </form>
-
-        <h5>Список адміністраторів:</h5>
-        <ul class="list-group">
-            {% for admin_user in admins %}
+            <h6 class="fw-bold text-dark mb-3">Список адміністраторів:</h6>
+            <ul class="list-group">
+                {% for admin_user in admins %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                     <div>
                         <strong>{{ admin_user.username }}</strong> ({{ admin_user.email }})
+                        {% if admin_user.is_superadmin %}
+                            <span class="badge bg-danger ms-2">Головний суперадмін</span>
+                        {% endif %}
                     </div>
-                    {% if admin_user.email != current_user.email %}
-                        <form action="{{ url_for('revoke_admin', user_id=admin_user.id) }}" method="POST" style="margin: 0;">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-sm btn-outline-warning">Забрати права</button>
-                        </form>
-                    {% else %}
-                        <span class="badge bg-secondary">Головний адмін</span>
+                    {% if not admin_user.is_superadmin %}
+                    <form action="{{ url_for('revoke_admin', user_id=admin_user.id) }}" method="POST" class="d-inline">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-outline-danger">Забрати права</button>
+                    </form>
                     {% endif %}
                 </li>
-            {% endfor %}
-        </ul>
+                {% endfor %}
+            </ul>
+        </div>
     </div>
     {% endif %}
 
-    <div style="background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-        <h4 style="color: #8b0000; margin-bottom: 1rem;">Список страв</h4>
-        <table class="table table-striped align-middle">
-            <thead>
-                <tr>
-                    <th>Фото</th>
-                    <th>Назва</th>
-                    <th>Категорія</th>
-                    <th>Ціна</th>
-                    <th>Дії</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for dish in dishes %}
-                    <tr>
-                        <td>
-                            <img src="{{ url_for('static', filename='uploads/' + dish.image) }}" alt="{{ dish.title }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px;">
-                        </td>
-                        <td><strong>{{ dish.title }}</strong></td>
-                        <td>{{ dish.category }}</td>
-                        <td>{{ dish.price }} грн</td>
-                        <td>
-                            <a href="{{ url_for('edit_dish', dish_id=dish.id) }}" class="btn btn-sm btn-outline-primary me-1">Редагувати</a>
-                            <form action="{{ url_for('delete_dish', dish_id=dish.id) }}" method="POST" style="display:inline;">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Ви впевнені, що хочете видалити страву?');">Видалити</button>
-                            </form>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <!-- Бронювання столиків -->
+    <div class="card shadow-sm mb-5 border-0">
+        <div class="card-header bg-primary text-white fw-bold">
+            Бронювання столиків
+        </div>
+        <div class="card-body">
+            {% if reservations %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Ім'я клієнта</th>
+                            <th>Телефон</th>
+                            <th>Дата</th>
+                            <th>Час</th>
+                            <th>Гостей</th>
+                            <th>Дія</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for res in reservations %}
+                        <tr>
+                            <td><strong>#{{ res.id }}</strong></td>
+                            <td>{{ res.name }}</td>
+                            <td><a href="tel:{{ res.phone }}" class="text-decoration-none fw-bold">{{ res.phone }}</a></td>
+                            <td>{{ res.date }}</td>
+                            <td>{{ res.time }}</td>
+                            <td><span class="badge bg-info text-dark">{{ res.guests }} ос.</span></td>
+                            <td>
+                                <form action="{{ url_for('cancel_reservation', res_id=res.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Скасувати це бронювання?')">Скасувати</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted m-0">Активних бронювань столиків немає.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Активні замовлення -->
+    <div class="card shadow-sm mb-5 border-0">
+        <div class="card-header bg-danger text-white fw-bold">
+            Активні замовлення (В обробці)
+        </div>
+        <div class="card-body">
+            {% if active_orders %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Клієнт</th>
+                            <th>Дата</th>
+                            <th>Склад</th>
+                            <th>Сума</th>
+                            <th>Статус</th>
+                            <th>Дія</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in active_orders %}
+                        <tr>
+                            <td><strong>#{{ order.id }}</strong></td>
+                            <td>{{ order.user.username }} ({{ order.user.email }})</td>
+                            <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td>
+                                <ul class="list-unstyled mb-0 small">
+                                    {% for item in order.items %}
+                                    <li>• {{ item.dish_title }} x{{ item.quantity }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="fw-bold text-danger">{{ order.total_price }} грн</td>
+                            <td><span class="badge bg-warning text-dark">{{ order.status }}</span></td>
+                            <td>
+                                <form action="{{ url_for('complete_order', order_id=order.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-success">Завершити (Виконано)</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted m-0">Активних замовлень немає.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Віконце виконаних замовлень -->
+    <div class="card shadow-sm mb-5 border-0">
+        <div class="card-header bg-success text-white fw-bold">
+            Виконані замовлення
+        </div>
+        <div class="card-body">
+            {% if completed_orders %}
+            <div class="table-responsive">
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Клієнт</th>
+                            <th>Дата</th>
+                            <th>Сума</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in completed_orders %}
+                        <tr>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.user.username }}</td>
+                            <td>{{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            <td class="fw-bold">{{ order.total_price }} грн</td>
+                            <td><span class="badge bg-success">Виконано</span></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted m-0">Виконаних замовлень ще немає.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Управління категоріями та стравами -->
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 p-3">
+                <h5 class="fw-bold text-danger">Додати категорію</h5>
+                <form action="{{ url_for('admin') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="mb-3">
+                        <input type="text" name="category_name" class="form-control" placeholder="Назва категорії" required>
+                    </div>
+                    <button type="submit" name="add_category" class="btn btn-danger w-100">Додати</button>
+                </form>
+
+                <hr class="my-4">
+
+                <h5 class="fw-bold text-danger">Категорії</h5>
+                <ul class="list-group">
+                    {% for cat in categories %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ cat.name }}
+                        <form action="{{ url_for('admin') }}" method="POST" class="d-inline">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="category_id" value="{{ cat.id }}">
+                            <button type="submit" name="delete_category" class="btn btn-sm btn-outline-danger">Видалити</button>
+                        </form>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 p-3 mb-4">
+                <h5 class="fw-bold text-danger mb-3">Додати нову страву</h5>
+                <form action="{{ url_for('admin') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" name="title" class="form-control" placeholder="Назва страви" required>
+                        </div>
+                        <div class="col-md-6">
+                            <select name="category_id" class="form-select" required>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="number" step="0.1" name="price" class="form-control" placeholder="Ціна (грн)" required>
+                        </div>
+                        <div class="col-md-6">
+                            <input type="file" name="image" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <input type="text" name="description" class="form-control" placeholder="Короткий опис" required>
+                        </div>
+                        <div class="col-12">
+                            <textarea name="full_description" class="form-control" rows="2" placeholder="Повний опис" required></textarea>
+                        </div>
+                        <div class="col-12">
+                            <button type="submit" name="add_dish" class="btn btn-success w-100">Зберегти страву</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card shadow-sm border-0 p-3">
+                <h5 class="fw-bold text-danger mb-3">Список страв</h5>
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Фото</th>
+                                <th>Назва</th>
+                                <th>Ціна</th>
+                                <th>Дії</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dish in dishes %}
+                            <tr>
+                                <td><img src="{{ url_for('static', filename='uploads/' + dish.image) }}" style="width: 50px; height: 50px; object-fit: contain;"></td>
+                                <td>{{ dish.title }}</td>
+                                <td>{{ dish.price }} грн</td>
+                                <td>
+                                    <a href="{{ url_for('edit_dish', dish_id=dish.id) }}" class="btn btn-sm btn-outline-primary">Редагувати</a>
+                                    <form action="{{ url_for('delete_dish', dish_id=dish.id) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Видалити</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}

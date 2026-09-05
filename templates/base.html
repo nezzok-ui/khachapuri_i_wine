@@ -56,7 +56,7 @@
         </nav>
     </header>
 
-    <div class="container">
+    <div class="container-fluid px-4 py-3">
         {% block content %}{% endblock content %}
     </div>
 
@@ -78,7 +78,7 @@
     {% block script %}
     <script>
     document.addEventListener('submit', function(e) {
-        if (e.target.action && e.target.action.includes('/cart/add/')) {
+        if (e.target.action && (e.target.action.includes('/cart/add/') || e.target.action.includes('/add_to_cart/'))) {
             e.preventDefault();
 
             const form = e.target;

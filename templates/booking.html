@@ -10,30 +10,30 @@
         
         <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Ваше ім'я:</label>
-            <input type="text" name="name" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;" value="{% if current_user.is_authenticated %}{{ current_user.username }}{% endif %}">
+            <input type="text" name="name" required class="form-control" value="{% if current_user.is_authenticated %}{{ current_user.username }}{% endif %}">
         </div>
 
         <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Телефон:</label>
-            <input type="tel" name="phone" required placeholder="+380..." style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+            <input type="tel" name="phone" required placeholder="+380..." class="form-control">
         </div>
 
         <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Дата:</label>
-            <input type="date" name="date" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+            <input type="date" name="date" required min="{{ today_date }}" class="form-control">
         </div>
 
         <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Час:</label>
-            <input type="time" name="time" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+            <input type="time" name="time" required class="form-control">
         </div>
 
         <div style="margin-bottom: 1.5rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Кількість гостей:</label>
-            <input type="number" name="guests" min="1" max="20" value="2" required style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 6px;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: bold;">Кількість гостей (макс. 50):</label>
+            <input type="number" name="guests" min="1" max="50" value="2" required class="form-control">
         </div>
 
-        <button type="submit" style="width: 100%; padding: 0.75rem; background-color: #8b0000; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">Забронювати</button>
+        <button type="submit" class="btn w-100" style="background-color: #8b0000; color: white; font-weight: bold; padding: 0.75rem;">Забронювати</button>
     </form>
 </div>
 {% endblock %}

@@ -37,7 +37,10 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1rem; border-top: 2px solid #eee;">
             <h4>Загальна сума: <span style="color: #8b0000;">{{ total_sum }} грн</span></h4>
-            <a href="{{ url_for('checkout') }}" class="btn btn-success btn-lg" style="background-color: #28a745; border: none;">Оформити замовлення</a>
+            <form action="{{ url_for('checkout') }}" method="POST" style="margin: 0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-success btn-lg" style="background-color: #28a745; border: none;">Оформити замовлення</button>
+            </form>
         </div>
     {% else %}
         <p style="text-align: center; color: #777; font-size: 1.2rem; margin: 2rem 0;">Ваш кошик порожній.</p>

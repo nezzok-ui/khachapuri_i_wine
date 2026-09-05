@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+    <h2 style="color: #800000; margin-bottom: 20px;">Деталі замовлення №{{ order.id }}</h2>
+    <p style="margin-bottom: 10px;"><strong>Дата створення:</strong> {{ order.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+    <p style="margin-bottom: 25px;"><strong>Загальна сума:</strong> <span style="color: #800000; font-weight: bold; font-size: 1.2rem;">{{ order.total_price }} грн</span></p>
+
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+        <thead>
+            <tr style="border-bottom: 2px solid #eee; text-align: left;">
+                <th style="padding: 12px;">Назва страви</th>
+                <th style="padding: 12px;">Ціна</th>
+                <th style="padding: 12px;">Кількість</th>
+                <th style="padding: 12px;">Сума</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items %}
+            <tr style="border-bottom: 1px solid #eee;">
+                <td style="padding: 12px;">{{ item.dish_title }}</td>
+                <td style="padding: 12px;">{{ item.price }} грн</td>
+                <td style="padding: 12px;">{{ item.quantity }} шт.</td>
+                <td style="padding: 12px; font-weight: bold;">{{ item.price * item.quantity }} грн</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ url_for('profile') }}" style="display: inline-block; padding: 10px 20px; background: #800000; color: white; border-radius: 6px; text-decoration: none;">Повернутися в профіль</a>
+</div>
+{% endblock %}
